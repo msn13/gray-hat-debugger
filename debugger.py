@@ -1,11 +1,9 @@
-from ctypes import *
-
 from debugger_defines import *
 
 kernel32 = windll.kernel32
 
 
-class debugger():
+class debugger:
     def __init__(self):
         pass
     
@@ -30,7 +28,13 @@ class debugger():
         # We then initialize the cb variable in the STARTUPINFO struct
         # which is just the size of the struct itself
         startupinfo.cb = sizeof(startupinfo)
-        if kernel32.CreateProcessA(path_to_exe,
+        
+        # File could not be found w/out encoding
+        exe_path = path_to_exe.encode('utf-8')
+        
+        print(f"[*] Attempting to launch: {path_to_exe}")
+        
+        if kernel32.CreateProcessA(exe_path,
                                    None,
                                    None,
                                    None,
@@ -40,7 +44,12 @@ class debugger():
                                    None,
                                    byref(startupinfo),
                                    byref(process_information)):
+            
             print("[*] We have successfully launched the process!")
             print("[*] PID: %d" % process_information.dwProcessId)
+            return True
+        
         else:
-            print("[*] Error: 0x%08x." % kernel32.GetLastError())
+            error = kernel32.GetLastError()
+            print("[*] Error: 0x%08x." % error)
+            return False
