@@ -1,3 +1,5 @@
+from _pyrepl.readline import raw_input
+
 from debugger_defines import *
 
 kernel32 = windll.kernel32
@@ -5,7 +7,9 @@ kernel32 = windll.kernel32
 
 class debugger:
     def __init__(self):
-        pass
+        self.h_process = None
+        self.pid_t = None
+        self.debugger_active = False
     
     def load(self, path_to_exe):
         
@@ -32,7 +36,7 @@ class debugger:
         # File could not be found w/out encoding
         exe_path = path_to_exe.encode('utf-8')
         
-        print(f"[*] Attempting to launch: {path_to_exe}")
+        print(f'[*] Attempting to launch: {exe_path}')
         
         if kernel32.CreateProcessA(exe_path,
                                    None,
@@ -45,11 +49,84 @@ class debugger:
                                    byref(startupinfo),
                                    byref(process_information)):
             
-            print("[*] We have successfully launched the process!")
-            print("[*] PID: %d" % process_information.dwProcessId)
+            print('[*] We have successfully launched the process!')
+            print('[*] PID: %d' % process_information.dwProcessId)
+            self.h_process = self.open_process(process_information.dwProcessId)
             return True
         
         else:
             error = kernel32.GetLastError()
-            print("[*] Error: 0x%08x." % error)
+            print('[*] Error: 0x%08x.' % error)
+            return False
+    
+    def open_process(self, pid_t):
+        """
+        Takes in pid_t of a process and returns a handler to it.
+        :param pid_t:
+        :return: h_process
+        """
+        h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, pid_t, False)
+        if h_process is not None:
+            is_64_process = kernel32.IsWow64Process(h_process)
+            if is_64_process:
+                print('[*] We have successfully obtained a x86 emulator process handler!')
+            else:
+                print('[*] We have successfully obtained a non x86 emulator process handler!')
+            return h_process
+        
+        else:
+            print('[*] Unable to open the process.')
+            return None
+    
+    def attach(self, pid_t):
+        """
+        Tries to attach to the process, if it fails it exits.
+        :param pid_t:
+        """
+        self.h_process = self.open_process(pid_t)
+        
+        if kernel32.DebugActiveProcess(pid_t):
+            self.debugger_active = True
+            self.pid_t = int(pid_t)
+            self.run()
+        
+        else:
+            print('[*] Unable to attach to the process.')
+    
+    def run(self):
+        """
+        Poll for debugging events.
+        """
+        print('[*] Waiting for debug event from process ...')
+        while self.debugger_active:
+            self.get_debug_event()
+    
+    def get_debug_event(self):
+        """
+        Waits for a debugging event and handles debug events.
+        """
+        debug_event = DEBUG_EVENT()
+        continue_status = DBG_CONTINUE
+        
+        if kernel32.WaitForDebugEvent(byref(debug_event), INFINITE):
+            # TODO
+            raw_input('TODO: Event Handlers, press key to continue...')
+            
+            self.debugger_active = False
+            kernel32.ContinueDebugEvent(debug_event.dwProcessId, debug_event.dwThreadId,
+                                        continue_status)
+        else:
+            print('[*] Debug Event not found.')
+    
+    def detach(self):
+        """
+        Detaches from the process, if it fails it exits with last error code of that process.
+        """
+        if kernel32.DebugActiveProcessStop(self.pid_t):
+            print('[*] Finished debugging. Exiting...')
+            return True
+        
+        else:
+            err = kernel32.GetLastError()
+            print('Error when detaching. Exit Code: ', err)
             return False
