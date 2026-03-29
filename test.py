@@ -4,10 +4,9 @@ import debugger
 def test():
     dbg = debugger.debugger()
     
-    #test: dbg.load("C:\\Windows\\SysWOW64\\notepad.exe")
+    #dbg.load("C:\\Windows\\SysWOW64\\notepad.exe")
     
     pid_t = input('[+] Enter the desired process ID: ')
-    
     print(f'[*] Attaching to given process ID: {pid_t}\n')
     dbg.attach(int(pid_t))
     

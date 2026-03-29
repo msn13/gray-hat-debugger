@@ -2,6 +2,7 @@ from debugger_defines import *
 
 kernel32 = windll.kernel32
 
+
 class debugger:
     def __init__(self):
         self.h_process = None
@@ -159,7 +160,7 @@ class debugger:
                     threads.append(thread_entry.th32ThreadID)
                 
                 success = kernel32.Thread32Next(snapshot, byref(thread_entry))
-                
+            
             if kernel32.CloseHandle(snapshot):
                 print(f'[*] Successfully gathered threads info into a list!')
                 return threads
