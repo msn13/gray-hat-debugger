@@ -1,3 +1,4 @@
-# Windows Debugger
+# 32-Bit Windows Debugger
 
-## Using: GRAY HAT PYTHON by JUSTIN SEITZ
+## Based On: GRAY HAT PYTHON by JUSTIN SEITZ
+## Extended and Customized By: Mason Murphy
