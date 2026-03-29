@@ -62,7 +62,7 @@ class debugger:
         :param pid_t:
         :return: h_process
         """
-        h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, None, pid_t)
+        h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid_t)
         
         if h_process is not None:
             print(f'[*] Successfully obtained process handle for pid: {pid_t}!\n')
