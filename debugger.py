@@ -67,15 +67,11 @@ class debugger:
         """
         h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, pid_t, False)
         if h_process is not None:
-            is_64_process = kernel32.IsWow64Process(h_process)
-            if is_64_process:
-                print('[*] We have successfully obtained a x86 emulator process handler!')
-            else:
-                print('[*] We have successfully obtained a non x86 emulator process handler!')
+            print('[*] We have successfully obtained a process handler!')
             return h_process
         
         else:
-            print('[*] Unable to open the process.')
+            print('[*] Unable to obtain process handler!.')
             return None
     
     def attach(self, pid_t):
