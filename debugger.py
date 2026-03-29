@@ -1,5 +1,3 @@
-from ctypes import *
-
 from debugger_defines import *
 
 kernel32 = windll.kernel32
@@ -106,11 +104,14 @@ class debugger:
         
         if kernel32.WaitForDebugEvent(byref(debug_event), INFINITE):
             # TODO
-            input('[*] TODO: Event Handlers, press enter to continue...\n')
+            # input('[*] TODO: Event Handlers, press enter to continue...\n')
+            # self.debugger_active = False
             
-            self.debugger_active = False
-            kernel32.ContinueDebugEvent(debug_event.dwProcessId, debug_event.dwThreadId,
-                                        continue_status)
+            kernel32.ContinueDebugEvent(
+                debug_event.dwProcessId,
+                debug_event.dwThreadId,
+                continue_status)
+        
         else:
             print('[*] Debug Event not found.\n')
     
