@@ -2,7 +2,6 @@ from debugger_defines import *
 
 kernel32 = windll.kernel32
 
-
 class debugger:
     def __init__(self):
         self.h_process = None
@@ -82,7 +81,7 @@ class debugger:
         if kernel32.DebugActiveProcess(pid_t):
             self.debugger_active = True
             self.pid_t = int(pid_t)
-            self.run()
+            #test: self.run()
         
         else:
             self.print_err(self.attach)
@@ -105,7 +104,7 @@ class debugger:
         if kernel32.WaitForDebugEvent(byref(debug_event), INFINITE):
             # TODO
             # input('[*] TODO: Event Handlers, press enter to continue...\n')
-            # self.debugger_active = False
+            #test: self.debugger_active = False
             
             kernel32.ContinueDebugEvent(
                 debug_event.dwProcessId,
@@ -158,8 +157,9 @@ class debugger:
             while success:
                 if thread_entry.th32OwnerProcessID == self.pid_t:
                     threads.append(thread_entry.th32ThreadID)
-                    success = kernel32.Thread32Next(snapshot, byref(thread_entry))
-            
+                
+                success = kernel32.Thread32Next(snapshot, byref(thread_entry))
+                
             if kernel32.CloseHandle(snapshot):
                 print(f'[*] Successfully gathered threads info into a list!')
                 return threads
