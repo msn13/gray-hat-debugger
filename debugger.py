@@ -53,8 +53,7 @@ class debugger:
             return True
         
         else:
-            err = kernel32.GetLastError()
-            print(f'[*] Error creating process. Exit Code: {err}')
+            self.print_err(self.load)
             return False
     
     def open_process(self, pid_t):
@@ -63,14 +62,15 @@ class debugger:
         :param pid_t:
         :return: h_process
         """
-        h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid_t)
+        h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, None, pid_t)
+        
         if h_process is not None:
-            print('[*] We have successfully obtained a process handler!\n')
+            print(f'[*] Successfully obtained process handle for pid: {pid_t}!\n')
             return h_process
         
         else:
-            print('[*] Unable to obtain process handler!.\n')
-            return None
+            print(f'[*] Unable to obtain process handle for pid: {pid_t}!.\n')
+            return False
     
     def attach(self, pid_t):
         """
@@ -85,7 +85,7 @@ class debugger:
             self.run()
         
         else:
-            print('[*] Unable to attach to the process.\n')
+            self.print_err(self.attach)
     
     def run(self):
         """
@@ -124,6 +124,71 @@ class debugger:
             return True
         
         else:
-            err = kernel32.GetLastError()
-            print(f'[*] Error when detaching. Exit Code: {err}\n')
+            self.print_err(self.detach)
             return False
+    
+    def open_thread(self, tid_t):
+        """
+        Opens and returns a thread handle for the given thread id.
+        :param tid_t:
+        :return: h_thread
+        """
+        h_thread = kernel32.OpenThread(THREAD_ALL_ACCESS, None, tid_t)
+        
+        if h_thread is not None:
+            print(f'[*] Successfully obtained thread handle for tid: {tid_t}!\n')
+            return h_thread
+        else:
+            print(f'[*] Unable to obtain thread handle for tid: {tid_t}!.\n')
+            return False
+    
+    def enumerate_threads(self):
+        """
+        Creates and returns a list of threads that match the current process id.
+        :return: threads
+        """
+        thread_entry = THREADENTRY32()
+        threads = []
+        snapshot = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, self.pid_t)
+        
+        if snapshot is not None:
+            thread_entry.dwSize = sizeof(thread_entry)
+            success = kernel32.Thread32First(snapshot, byref(thread_entry))
+            
+            while success:
+                if thread_entry.th32OwnerProcessID == self.pid_t:
+                    threads.append(thread_entry.th32ThreadID)
+                    success = kernel32.Thread32Next(snapshot, byref(thread_entry))
+            
+            if kernel32.CloseHandle(snapshot):
+                print(f'[*] Successfully gathered threads info into a list!')
+                return threads
+            else:
+                self.print_err(self.enumerate_threads)
+                return False
+        else:
+            self.print_err(self.enumerate_threads)
+            return False
+    
+    def get_thread_context(self, tid_t):
+        """
+        Populates the thread context with cpu registers for a given thread id.
+        :param tid_t:
+        :return: context
+        """
+        context = CONTEXT()
+        context.ContextFlags = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS
+        
+        h_thread = self.open_thread(tid_t)
+        
+        if kernel32.GetThreadContext(h_thread, byref(context)):
+            kernel32.CloseHandle(h_thread)
+            return context
+        
+        else:
+            self.print_err(self.get_thread_context)
+            return False
+    
+    def print_err(self, errored_fun):
+        err = kernel32.GetLastError()
+        print(f'[*] Error occurred during {errored_fun.__name__} function. Exit Code: {err}\n')
