@@ -1,4 +1,4 @@
-from _pyrepl.readline import raw_input
+from ctypes import *
 
 from debugger_defines import *
 
@@ -36,7 +36,7 @@ class debugger:
         # File could not be found w/out encoding
         exe_path = path_to_exe.encode('utf-8')
         
-        print(f'[*] Attempting to launch: {exe_path}')
+        print(f'[*] Attempting to launch: {exe_path}\n')
         
         if kernel32.CreateProcessA(exe_path,
                                    None,
@@ -49,14 +49,14 @@ class debugger:
                                    byref(startupinfo),
                                    byref(process_information)):
             
-            print('[*] We have successfully launched the process!')
+            print('[*] We have successfully launched the process!\n')
             print('[*] PID: %d' % process_information.dwProcessId)
             self.h_process = self.open_process(process_information.dwProcessId)
             return True
         
         else:
-            error = kernel32.GetLastError()
-            print('[*] Error: 0x%08x.' % error)
+            err = kernel32.GetLastError()
+            print(f'[*] Error creating process. Exit Code: {err}')
             return False
     
     def open_process(self, pid_t):
@@ -65,13 +65,13 @@ class debugger:
         :param pid_t:
         :return: h_process
         """
-        h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, pid_t, False)
+        h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid_t)
         if h_process is not None:
-            print('[*] We have successfully obtained a process handler!')
+            print('[*] We have successfully obtained a process handler!\n')
             return h_process
         
         else:
-            print('[*] Unable to obtain process handler!.')
+            print('[*] Unable to obtain process handler!.\n')
             return None
     
     def attach(self, pid_t):
@@ -87,13 +87,13 @@ class debugger:
             self.run()
         
         else:
-            print('[*] Unable to attach to the process.')
+            print('[*] Unable to attach to the process.\n')
     
     def run(self):
         """
         Poll for debugging events.
         """
-        print('[*] Waiting for debug event from process ...')
+        print('[*] Waiting for debug event from process ...\n')
         while self.debugger_active:
             self.get_debug_event()
     
@@ -106,23 +106,23 @@ class debugger:
         
         if kernel32.WaitForDebugEvent(byref(debug_event), INFINITE):
             # TODO
-            raw_input('TODO: Event Handlers, press key to continue...')
+            input('[*] TODO: Event Handlers, press enter to continue...\n')
             
             self.debugger_active = False
             kernel32.ContinueDebugEvent(debug_event.dwProcessId, debug_event.dwThreadId,
                                         continue_status)
         else:
-            print('[*] Debug Event not found.')
+            print('[*] Debug Event not found.\n')
     
     def detach(self):
         """
         Detaches from the process, if it fails it exits with last error code of that process.
         """
         if kernel32.DebugActiveProcessStop(self.pid_t):
-            print('[*] Finished debugging. Exiting...')
+            print('[*] Finished debugging. Exiting...\n')
             return True
         
         else:
             err = kernel32.GetLastError()
-            print('Error when detaching. Exit Code: ', err)
+            print(f'[*] Error when detaching. Exit Code: {err}\n')
             return False
