@@ -81,7 +81,7 @@ class debugger:
         if kernel32.DebugActiveProcess(pid_t):
             self.debugger_active = True
             self.pid_t = int(pid_t)
-            #test: self.run()
+            self.run()
         
         else:
             self.print_err(self.attach)
@@ -104,7 +104,7 @@ class debugger:
         if kernel32.WaitForDebugEvent(byref(debug_event), INFINITE):
             # TODO
             # input('[*] TODO: Event Handlers, press enter to continue...\n')
-            #test: self.debugger_active = False
+            self.debugger_active = False
             
             kernel32.ContinueDebugEvent(
                 debug_event.dwProcessId,
